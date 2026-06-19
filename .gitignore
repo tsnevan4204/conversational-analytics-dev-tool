@@ -1,8 +1,6 @@
 # Local environment / secrets
 .env
 .claude/settings.local.json
-*.json
-!.mcp.json
 service-account*.json
 *.key
 

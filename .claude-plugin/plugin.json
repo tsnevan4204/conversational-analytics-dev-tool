@@ -1,0 +1,11 @@
+{
+  "name": "conversational-analytics",
+  "description": "Hypothesis-driven conversational data analytics over any BigQuery dataset — SQL + Python, read-only, auto-discovers schema on first run.",
+  "version": "0.1.0",
+  "author": {
+    "name": "tsnevan4204"
+  },
+  "homepage": "https://github.com/tsnevan4204/conversational-analytics-dev-tool",
+  "repository": "https://github.com/tsnevan4204/conversational-analytics-dev-tool",
+  "license": "MIT"
+}

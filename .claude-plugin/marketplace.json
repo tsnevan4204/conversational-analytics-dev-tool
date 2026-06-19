@@ -1,0 +1,10 @@
+{
+  "name": "tsnevan4204-conversational-analytics",
+  "plugins": [
+    {
+      "name": "conversational-analytics",
+      "source": "./",
+      "description": "Hypothesis-driven conversational data analytics over any BigQuery dataset — SQL + Python, read-only, auto-discovers schema on first run."
+    }
+  ]
+}
