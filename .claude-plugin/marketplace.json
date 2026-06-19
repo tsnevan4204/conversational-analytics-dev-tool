@@ -1,5 +1,8 @@
 {
   "name": "tsnevan4204-conversational-analytics",
+  "owner": {
+    "name": "tsnevan4204"
+  },
   "plugins": [
     {
       "name": "conversational-analytics",
