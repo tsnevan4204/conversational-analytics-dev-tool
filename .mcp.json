@@ -2,7 +2,11 @@
   "mcpServers": {
     "bigquery": {
       "command": "bash",
-      "args": ["mcp_start.sh"]
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp_start.sh", "bigquery"]
+    },
+    "local-files": {
+      "command": "bash",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp_start.sh", "local-files"]
     }
   }
 }

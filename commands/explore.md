@@ -11,11 +11,12 @@ Guidelines:
   user wants -- run something that surfaces the shape of the data first
   (counts, distinct values, time ranges, nulls), then narrow based on what
   you actually see.
-- Use BigQuery (`execute_sql_readonly`) for aggregation, filtering, and
-  anything SQL expresses naturally. Drop into Python (pandas/numpy/
-  scipy/sklearn/matplotlib, run via bash in the venv) for anything SQL
-  can't do cleanly: statistical tests, model fitting, multi-step
-  transforms, or chart generation.
+- Use SQL for aggregation, filtering, and anything it expresses naturally —
+  `execute_sql_readonly` for BigQuery, `execute_sql_local` for local files
+  (CSV/JSON/Parquet). Drop into Python (pandas/numpy/scipy/sklearn/
+  matplotlib, run via bash in the venv) for anything SQL can't do cleanly:
+  statistical tests, model fitting, multi-step transforms, or chart
+  generation.
 - If you produce a chart, save it as a PNG under `outputs/` and describe
   what it shows in text.
 - If the investigation reaches a real conclusion (not just "I looked and

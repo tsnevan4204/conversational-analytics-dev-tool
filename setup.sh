@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Sets up the local Python environment for analysis (pandas/numpy/scipy/
-# sklearn/matplotlib) and checks that BigQuery access is reachable.
+# sklearn/matplotlib/duckdb) and checks BigQuery auth if you'll use it.
 #
-# This does NOT set up BigQuery auth itself -- that happens via OAuth the
-# first time Claude Code calls the bigquery MCP tool. This script just
-# checks gcloud is around and gives you a heads-up if it isn't, since some
-# people prefer to pre-authenticate.
+# Local files (CSV/JSON/Parquet) work with no extra setup beyond this
+# script. BigQuery needs the gcloud CLI and a one-time
+# `gcloud auth application-default login` -- this script does NOT do that
+# for you, it only checks whether it's already done.
 
 set -euo pipefail
 
@@ -18,21 +18,22 @@ echo "==> Installing pinned requirements..."
 ./venv/bin/pip install --upgrade pip --quiet
 ./venv/bin/pip install -r requirements.txt --quiet
 
-echo "==> Checking for gcloud CLI (optional, for pre-auth / sanity check)..."
-if command -v gcloud >/dev/null 2>&1; then
-  echo "    gcloud found: $(gcloud --version | head -n1)"
-  echo "    Current project (if set): $(gcloud config get-value project 2>/dev/null || echo 'none set')"
+echo "==> Checking BigQuery auth (skip this if you're only analyzing local files)..."
+if ! command -v gcloud >/dev/null 2>&1; then
+  echo "    gcloud CLI not found. Required for BigQuery -- install from"
+  echo "    https://cloud.google.com/sdk/docs/install, then run:"
+  echo "      gcloud auth application-default login"
+elif ! gcloud auth application-default print-access-token >/dev/null 2>&1; then
+  echo "    gcloud found, but not authenticated for BigQuery yet. Run:"
+  echo "      gcloud auth application-default login"
 else
-  echo "    gcloud not found locally. That's fine -- BigQuery access in this"
-  echo "    tool goes through OAuth via the bigquery MCP server, not gcloud."
-  echo "    You'll be prompted to sign in with your Google account the first"
-  echo "    time Claude Code calls a BigQuery tool."
+  echo "    gcloud authenticated. Current project: $(gcloud config get-value project 2>/dev/null || echo 'none set')"
 fi
 
 if [ ! -f .env ]; then
   echo "==> No .env found. Copying .env.example -> .env"
   cp .env.example .env
-  echo "    Edit .env and set GCP_PROJECT_ID to your own project."
+  echo "    Edit .env and set GCP_PROJECT_ID to your own project (BigQuery only)."
 fi
 
 mkdir -p outputs
@@ -40,7 +41,5 @@ mkdir -p outputs
 echo ""
 echo "Setup complete."
 echo "Next steps:"
-echo "  1. Edit .env and set GCP_PROJECT_ID to your own GCP project."
-echo "  2. Run 'claude' in this directory."
-echo "  3. The first BigQuery query will prompt you to OAuth into your Google account."
-echo "  4. Try: /diagnose-telemetry"
+echo "  - Local files: cd into a folder with CSV/JSON/Parquet data, run 'claude', then /discover-files"
+echo "  - BigQuery: edit .env, run 'gcloud auth application-default login' if you haven't, then 'claude' and /discover-schema"

@@ -1,49 +1,51 @@
 # Conversational Analytics Dev Tool
 
-Ask questions about your BigQuery data in plain English. Claude runs the
-queries, forms hypotheses, writes follow-up queries, drops into Python for
-charts and stats — and shows you the full reasoning trail, not just a final
-number.
+Ask questions about your data in plain English. Claude runs queries, forms
+hypotheses, writes follow-ups, and drops into Python for charts and stats —
+on BigQuery or on local CSV/JSON/Parquet files. Runs on your Claude
+subscription (no per-token API cost). Everything is read-only.
 
-Runs on your Claude subscription (no per-token API cost). All BigQuery access
-is read-only. Nothing is written back to your warehouse.
-
----
-
-## Installation
-
-### Option A — Plugin install (recommended)
-
-If you already have Claude Code, this is the fastest path:
+## Install
 
 ```
 /plugin marketplace add tsnevan4204/conversational-analytics-dev-tool
 /plugin install conversational-analytics@tsnevan4204-conversational-analytics
 ```
 
-The plugin adds the analytics skill, slash commands, and BigQuery MCP to any Claude Code session. You still need to complete the **GCP setup** steps (4 and 5) below, and install [uv](https://docs.astral.sh/uv/getting-started/installation/) so the MCP server can install its Python dependencies automatically:
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) so the
+bundled MCP servers can fetch their own dependencies:
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-Then run `gcloud auth application-default login` and you're done.
+That's enough to analyze **local files** — skip to [Usage](#usage).
 
----
+### BigQuery setup (skip this if you only need local files)
 
-### Option B — Clone and run
+1. Install the [Google Cloud CLI](https://cloud.google.com/sdk/docs/install) (`gcloud`).
+2. Authenticate — **this step is required**, every BigQuery query fails
+   without it:
+   ```bash
+   gcloud auth application-default login
+   ```
+   One-time browser sign-in; `gcloud` caches the result.
+3. Grant your account access to the project:
+   ```bash
+   PROJECT_ID="your-project-id"; USER_EMAIL="you@example.com"
+   for ROLE in roles/bigquery.jobUser roles/bigquery.dataViewer roles/mcp.toolUser; do
+     gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+       --member="user:$USER_EMAIL" --role="$ROLE"
+   done
+   ```
+4. Create a `.env` in your project directory:
+   ```
+   GCP_PROJECT_ID=your-project-id
+   GCP_DATASET=your-dataset-name
+   ```
 
-Good for contributing or running the tool as a standalone project.
-
-## One-time setup
-
-### 1. Prerequisites
-
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) — the CLI, with an active subscription
-- Python 3.10+
-- [Google Cloud CLI](https://cloud.google.com/sdk/docs/install) (`gcloud`)
-
-### 2. Clone and install
+<details>
+<summary>Clone-and-run instead of plugin install</summary>
 
 ```bash
 git clone https://github.com/tsnevan4204/conversational-analytics-dev-tool.git
@@ -51,121 +53,76 @@ cd conversational-analytics-dev-tool
 ./setup.sh
 ```
 
-`setup.sh` creates a Python virtualenv and installs all dependencies
-(pandas, numpy, scipy, scikit-learn, matplotlib, google-cloud-bigquery, etc.).
+`setup.sh` creates a venv with pandas/numpy/scipy/sklearn/matplotlib/duckdb
+and checks whether BigQuery auth is already done, telling you if it isn't.
+The same `gcloud auth application-default login` step above still applies
+if you're using BigQuery.
+</details>
 
-### 3. Point it at your GCP project
-
-Edit the `.env` file that `setup.sh` created:
-
-```
-GCP_PROJECT_ID=your-project-id
-GCP_DATASET=your-dataset-name
-```
-
-### 4. Grant BigQuery access
-
-Your Google account needs three IAM roles on the project:
+## Usage
 
 ```bash
-PROJECT_ID="your-project-id"
-USER_EMAIL="you@example.com"
-
-for ROLE in roles/mcp.toolUser roles/bigquery.jobUser roles/bigquery.dataViewer; do
-  gcloud projects add-iam-policy-binding "$PROJECT_ID" \
-    --member="user:$USER_EMAIL" --role="$ROLE"
-done
-```
-
-Or do it in the [GCP IAM console](https://console.cloud.google.com/iam-admin/iam).
-
-### 5. Authenticate
-
-```bash
-gcloud auth application-default login
-```
-
-This opens a browser to sign in. You only need to do this once (credentials
-are cached by gcloud and stay valid for an extended period).
-
-### 6. Discover your schema
-
-Start Claude Code and run the schema discovery command:
-
-```bash
+cd your-data-folder   # CSV/JSON/Parquet files, or a .env pointed at BigQuery
 claude
 ```
 
+First time pointed at a new dataset or folder, build the schema cache:
+
 ```
-/discover-schema
-```
-
-This profiles every table in your dataset and writes local schema docs that
-Claude reads before writing any query. Takes 1–2 minutes the first time.
-
----
-
-## Every time you use it
-
-```bash
-cd conversational-analytics-dev-tool
-claude
+/discover-schema project.dataset      # BigQuery
+/discover-files                       # local CSV/JSON/Parquet
 ```
 
-That's it. The BigQuery connection, your credentials, and the schema cache are
-all already set up. Just start asking questions.
+Then just ask:
 
----
-
-## What you can do
-
-**Ask naturally:**
 ```
 what does the data look like overall?
 are there any gaps or null values I should know about?
-show me how metric X changed over the last 30 days
 why does run abc123 look different from the others?
 ```
 
-**Or use slash commands for structured workflows:**
+## Features
 
 | Command | What it does |
 |---|---|
-| `/discover-schema` | Profile all tables and build the local schema cache |
+| `/discover-schema <project.dataset>` | Profile BigQuery tables → schema cache |
+| `/discover-files [path]` | Profile local CSV/JSON/Parquet files → schema cache |
 | `/diagnose-telemetry` | Data-quality audit: nulls, cardinality, frozen values |
 | `/explore <question>` | Open-ended hypothesis-driven investigation |
 | `/backtest-report` | Performance summary → markdown report + charts in `outputs/` |
 
-> **Plugin users:** commands are namespaced — use `/conversational-analytics:discover-schema`, `/conversational-analytics:diagnose-telemetry`, etc.
+> Plugin installs namespace commands, e.g. `/conversational-analytics:discover-schema`.
 
-**SQL + Python in the same turn:**
+Claude mixes SQL and Python in the same turn — query and aggregate with
+SQL, then drop into pandas/scipy/sklearn/matplotlib for statistical tests,
+models, or charts. Charts and reports land in `outputs/`.
 
-Claude will run a BigQuery query to aggregate data, then drop into Python to
-plot it, fit a model, or run a statistical test — whatever the question
-requires. Output charts and reports land in the `outputs/` folder.
+**Safety:** write/DDL SQL (`INSERT`, `CREATE`, `DROP`, ...) is rejected at
+the MCP server level for both BigQuery and local files — not just by
+instruction. Nothing is ever written back to your warehouse or your files.
 
----
+## Adding a new data source
 
-## What's in the Python environment
+BigQuery and local files both follow the same pattern — adding Postgres,
+SQLite, MongoDB, etc. means repeating it:
 
-| Category | Packages |
-|---|---|
-| Data manipulation | pandas, numpy, pyarrow |
-| Statistics / ML | scipy, scikit-learn |
-| Charts | matplotlib, pillow |
-| BigQuery client | google-cloud-bigquery, db-dtypes |
+1. A small MCP server exposing one read-only query tool (see
+   `mcp_bigquery_server.py` or `mcp_local_server.py`, ~80 lines each),
+   registered in `.mcp.json`.
+2. A `/discover-<source>` command that profiles it into
+   `schema/<name>.md` + `schema/_index.md`, in the same format the
+   existing commands use.
+3. A line in `CLAUDE.md` / `SKILL.md` telling Claude how to recognize when
+   that source applies.
 
-If a session needs a package that isn't listed, Claude will `pip install` it
-into the venv on the fly. To make it permanent, add it to `requirements.txt`.
-
----
+The reasoning loop, schema cache, and `outputs/` convention all work
+unchanged for any source plugged in this way.
 
 ## Notes
 
-- **Outputs** (reports, CSVs, charts) go in `outputs/` — gitignored, local
-  scratch space per machine.
-- **Schema cache** lives in `schema/` — also gitignored. Re-run
-  `/discover-schema` after your dataset changes.
-- **Nothing is ever written to BigQuery.** Write/DDL operations are blocked
-  at the MCP server level, not just by instruction.
-- Supports BigQuery only today. MySQL/SQLite/Postgres is a natural extension.
+- `outputs/` and `schema/` are gitignored — per-machine scratch space, not
+  shared history. Re-run `/discover-schema` or `/discover-files` after your
+  data changes.
+- If a Python package a session needs isn't installed, Claude will `pip
+  install` it into the venv on the fly; add it to `requirements.txt` to
+  make that permanent.
