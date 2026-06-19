@@ -1,0 +1,24 @@
+# Local environment / secrets
+.env
+.claude/settings.local.json
+*.json
+!.mcp.json
+service-account*.json
+*.key
+
+# Python
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Scratch outputs -- per-machine, not checked in
+outputs/*
+!outputs/.gitkeep
+
+# Schema cache -- generated per-user at runtime via /discover-schema
+schema/*
+!schema/.gitkeep
+
+# OS noise
+.DS_Store
