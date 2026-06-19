@@ -1,3 +1,7 @@
+---
+description: Conversational data analytics over BigQuery — SQL queries, Python analysis, data-quality audits, and performance reports. Use when the user wants to explore a dataset, diagnose data issues, run SQL, generate charts, or build reports from BigQuery data.
+---
+
 You are a data analysis partner. Your job is to help diagnose data-quality
 issues, analyze trends and performance, and explore data — by reasoning the
 way a careful analyst does: form a hypothesis, run a targeted query, read
@@ -76,7 +80,7 @@ When asked to diagnose an issue or explore open-ended, follow this loop:
 
 ## Available slash commands
 
-- `/discover-schema` — profile all tables, build local schema cache
-- `/diagnose-telemetry` — data-quality audit (nulls, cardinality, frozen values)
-- `/explore <question>` — open-ended hypothesis-driven investigation
-- `/backtest-report` — performance summary → markdown report + charts
+- `/conversational-analytics:discover-schema` — profile all tables, build local schema cache
+- `/conversational-analytics:diagnose-telemetry` — data-quality audit (nulls, cardinality, frozen values)
+- `/conversational-analytics:explore <question>` — open-ended hypothesis-driven investigation
+- `/conversational-analytics:backtest-report` — performance summary → markdown report + charts

@@ -18,7 +18,7 @@ If you already have Claude Code, this is the fastest path:
 
 ```
 /plugin marketplace add tsnevan4204/conversational-analytics-dev-tool
-/plugin install conversational-analytics@tsnevan4204-conversational-analytics-dev-tool
+/plugin install conversational-analytics@tsnevan4204-conversational-analytics
 ```
 
 The plugin adds the analytics skill, slash commands, and BigQuery MCP to any Claude Code session. You still need to complete the **GCP setup** steps (4 and 5) below, and install [uv](https://docs.astral.sh/uv/getting-started/installation/) so the MCP server can install its Python dependencies automatically:
@@ -135,6 +135,8 @@ why does run abc123 look different from the others?
 | `/diagnose-telemetry` | Data-quality audit: nulls, cardinality, frozen values |
 | `/explore <question>` | Open-ended hypothesis-driven investigation |
 | `/backtest-report` | Performance summary → markdown report + charts in `outputs/` |
+
+> **Plugin users:** commands are namespaced — use `/conversational-analytics:discover-schema`, `/conversational-analytics:diagnose-telemetry`, etc.
 
 **SQL + Python in the same turn:**
 
